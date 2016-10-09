@@ -1,6 +1,7 @@
 package org.openhab.binding.rothenergylogic.internal.model;
 
 public class Thermostat {
+    private String webserverId;
     private String id;
     private String ownerId;
     private String name;
@@ -14,6 +15,14 @@ public class Thermostat {
     private boolean weekProgramEnabled;
     private String opMode;
     private boolean opModeEnabled;
+
+    public String getWebserverId() {
+        return webserverId;
+    }
+
+    public void setWebserverId(String webserverId) {
+        this.webserverId = webserverId;
+    }
 
     public String getId() {
         return id;

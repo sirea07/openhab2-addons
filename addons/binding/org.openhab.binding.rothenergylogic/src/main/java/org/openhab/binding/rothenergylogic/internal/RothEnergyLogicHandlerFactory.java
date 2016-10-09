@@ -10,7 +10,6 @@ package org.openhab.binding.rothenergylogic.internal;
 import java.util.Collections;
 import java.util.Set;
 
-import org.eclipse.smarthome.config.discovery.DiscoveryServiceRegistry;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
@@ -29,7 +28,6 @@ public class RothEnergyLogicHandlerFactory extends BaseThingHandlerFactory {
 
     private final static Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
             .singleton(RothEnergyLogicBindingConstants.THING_TYPE_THERMOSTAT);
-    private DiscoveryServiceRegistry discoveryServiceRegistry;
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {

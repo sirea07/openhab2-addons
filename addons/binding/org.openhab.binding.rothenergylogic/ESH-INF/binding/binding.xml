@@ -7,5 +7,12 @@
     <name>RothEnergyLogic Binding</name>
     <description>This is the binding for RothEnergyLogic.</description>
     <author>sirea07</author>
-
+    
+    <config-description uri="binding:rothenergylogic">
+        <parameter name="webserver_ip" type="text" >        
+            <label>Webserver IP address</label>
+            <description>IP address of the master module that is connected to the local network.</description>
+            <required>true</required>
+        </parameter>
+    </config-description>
 </binding:binding>

@@ -43,6 +43,7 @@ public class WebserverResponseParser {
                                     Thermostat thermostat = thermostatsByIds.get(id);
                                     if (thermostat == null) {
                                         thermostat = new Thermostat();
+                                        thermostat.setWebserverId(key.split("\\.")[0]);
                                         thermostatsByIds.put(id, thermostat);
                                     }
                                     this.setParsedValueOnThermostat(thermostat, key, value);
@@ -56,11 +57,8 @@ public class WebserverResponseParser {
             result = thermostatsByIds.values();
 
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            this.logger.error("An Exception occurred while parsing response of webserver.", e);
         }
-
-        System.out.println(ilrReadValuesResponse);
 
         return result;
     }

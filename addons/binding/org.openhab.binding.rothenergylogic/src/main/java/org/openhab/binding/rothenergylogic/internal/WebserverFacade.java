@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
@@ -37,7 +38,10 @@ public class WebserverFacade {
 
     private Logger logger = LoggerFactory.getLogger(WebserverFacade.class);
     private ArrayList<String> readItemsKeys = new ArrayList<String>();
+
     private String ipAddress;
+
+    private static final String writeThermostatPropertyTemplate = "http://%s/cgi-bin/writeVal.cgi?%s.%s=%s";
 
     public WebserverFacade(String ipAddress) {
         this.ipAddress = ipAddress;
@@ -65,19 +69,35 @@ public class WebserverFacade {
 
         String xmlTemplate = this.getXmlTemplate();
 
-        int numberOfDevices = this.getNumberOfDevices(xmlTemplate);
+        int numberOfDevices = this.getNumberOfDevices(ipAddress, xmlTemplate);
 
         String requestBody = this.getRequestBody(xmlTemplate, numberOfDevices);
 
-        result = getILRReadValuesFromWebserver(requestBody);
+        result = getILRReadValuesFromWebserver(ipAddress, requestBody);
 
         return result;
     }
 
-    private String getILRReadValuesFromWebserver(String body) {
+    public void writeValue(String itemId, String property, String value) {
+        HttpClient client = HttpClients.createDefault();
+        HttpGet httpget = new HttpGet(
+                String.format(writeThermostatPropertyTemplate, this.ipAddress, itemId, property, value));
+
+        try {
+            client.execute(httpget);
+        } catch (IOException e) {
+            logger.error(String.format("IOException: %s %s", e.getMessage(), e));
+        }
+    }
+
+    public String convertTemperatureValue(double temperature) {
+        return String.valueOf((int) (temperature * 100));
+    }
+
+    private String getILRReadValuesFromWebserver(String ipAddress, String body) {
         String result = "";
         HttpClient client = HttpClients.createDefault();
-        HttpPost httppost = new HttpPost(String.format("http://%s/cgi-bin/ILRReadValues.cgi", this.ipAddress));
+        HttpPost httppost = new HttpPost(String.format("http://%s/cgi-bin/ILRReadValues.cgi", ipAddress));
         StringEntity entity;
         try {
             entity = new StringEntity(body);
@@ -95,11 +115,11 @@ public class WebserverFacade {
         return result;
     }
 
-    private int getNumberOfDevices(String xmlTemplate) {
+    private int getNumberOfDevices(String ipAddress, String xmlTemplate) {
 
         String requestBody = this.getRequestBody(xmlTemplate, 1);
 
-        String responseBody = this.getILRReadValuesFromWebserver(requestBody);
+        String responseBody = this.getILRReadValuesFromWebserver(ipAddress, requestBody);
 
         String numberOfDevices = responseBody.substring(responseBody.indexOf("totalNumberOfDevices"));
         numberOfDevices = numberOfDevices.substring(numberOfDevices.indexOf("<v>") + 3,
@@ -124,7 +144,7 @@ public class WebserverFacade {
     }
 
     private String getXmlTemplate() {
-        InputStream httpBodyStream = this.getClass().getResourceAsStream("/resources/getActualsHttpBody.xml");
+        InputStream httpBodyStream = this.getClass().getResourceAsStream("/getActualsHttpBody.xml");
         java.util.Scanner s = new java.util.Scanner(httpBodyStream).useDelimiter("\\A");
         String body = s.hasNext() ? s.next() : "";
 

@@ -4,21 +4,39 @@
         xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
         xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
-    <!-- Sample Thing Type -->
-    <thing-type id="sample">
+    <thing-type id="thermostat">
         <label>RothEnergyLogic Binding Thing</label>
-        <description>Sample thing for RothEnergyLogic Binding</description>
+        <description>Roth Energylogic Heating Thermostat</description>
 
         <channels>
-            <channel id="channel1" typeId="sample-channel"/>
+            <channel id="actual_temp"   typeId="actual_temp"/>
+            <channel id="set_temp"      typeId="set_temp"/>
         </channels>
+        <config-description-ref uri="thing-type:rothenergylogic:config" />
     </thing-type>
 
-    <!-- Sample Channel Type -->
-    <channel-type id="sample-channel">
-        <item-type>rothenergylogicItem</item-type>
-        <label>RothEnergyLogic Binding Channel</label>
-        <description>Sample channel for RothEnergyLogic Binding</description>
+    <channel-type id="actual_temp">
+        <item-type>Number</item-type>
+        <label>Actual Temperature</label>
+        <description>Actual measured room temperature</description>
+        <category>Temperature</category>
+        <tags>
+            <tag>heating</tag>
+        </tags>
+        <state pattern="%.1f °C" readOnly="true" >
+        </state>
+    </channel-type>
+    
+    <channel-type id="set_temp">
+        <item-type>Number</item-type>
+        <label>Set Temperature</label>
+        <description>Set desired room temperature.</description>
+        <category>Temperature</category>
+        <tags>
+            <tag>heating</tag>
+        </tags>
+        <state min="5" max="30" step="0.5" pattern="%.1f °C" readOnly="false">
+        </state>
     </channel-type>
 
 </thing:thing-descriptions>

@@ -17,7 +17,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
  */
 public class RothEnergyLogicBindingConstants {
 
-    public static final String BINDING_ID = "rothenergylogictouchline";
+    public static final String BINDING_ID = "rothenergylogic";
 
     // List of all Thing Type UIDs
     public final static ThingTypeUID THING_TYPE_THERMOSTAT = new ThingTypeUID(BINDING_ID, "thermostat");

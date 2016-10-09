@@ -48,12 +48,14 @@ public class DiscoveryServiceFactory implements ConfigurationListener {
     private void initDiscoveryService(ConfigurationAdmin cm, List<String> ipAddresses) {
         try {
             org.osgi.service.cm.Configuration config = cm
-                    .createFactoryConfiguration("org.openhab.binding.rothenergylogictouchline.discovery", null);
+                    .createFactoryConfiguration("org.openhab.binding.rothenergylogic.discovery", null);
+
             Hashtable<String, Object> properties = new Hashtable<String, Object>();
             properties.put(RothEnergyLogicBindingConstants.WEBSERVER_IP_ADDRESS, ipAddresses);
             properties.put(
                     org.eclipse.smarthome.config.discovery.DiscoveryService.CONFIG_PROPERTY_BACKGROUND_DISCOVERY_ENABLED,
                     "true");
+
             config.update(properties);
         } catch (IOException e) {
             this.logger.error("An error occured on initialization of DiscoveryService.");
