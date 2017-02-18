@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2016 by the respective copyright holders.
+ * Copyright (c) 2010-2017 by the respective copyright holders.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -142,9 +142,8 @@ public class ToonApiClient {
             throw new ToonConnectionException("invalid api response status: " + response.getStatus());
         }
         if (!response.hasEntity()) {
-            logger.debug("missing entity");
-            clientId = clientIdChecksum = null;
-            throw new ToonConnectionException("empty response from api");
+            logger.debug("empty response from api");
+            return new JsonObject();
         }
         JsonObject json = jsonParser.parse(response.readEntity(String.class)).getAsJsonObject();
         if (!json.get("success").getAsBoolean()) {

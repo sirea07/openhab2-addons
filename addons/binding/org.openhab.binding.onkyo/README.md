@@ -8,14 +8,31 @@ Binding should be compatible with Onkyo AV receivers which support ISCP (Integra
 
 ## Supported Things
 
-This binding supports only one thing: The Onkyo AV Receiver
+This binding supports only one thing: The Onkyo AV Receiver.  All supported Onkyo devices are registered as an audio sink in the framework.
 
 
 ## Discovery
 
 This binding can discover the supported Onkyo AV Receivers. At the moment only the following models are supported:
 
+* TX-NR414
+* TX-NR509
+* TX-NR515
+* TX-NR525
 * TX-NR535
+* TX-NR555
+* TX-NR535
+* TX-NR616
+* TX-NR626
+* TX-NR636
+* TX-NR646
+* TX-NR656
+* TX-NR717
+* TX-NR727
+* TX-NR747
+* TX-NR818
+* TX-NR828
+* TX-NR838
 
 ## Binding Configuration
 
@@ -28,32 +45,88 @@ org.openhab.onkyo:enableAutoDiscovery=false
 This configuration parameter only controls the Onkyo AVR auto-discovery process, not the openHAB auto-discovery. Moreover, if the openHAB auto-discovery is disabled, the Onkyo AVR auto-discovery is disabled too.
 
 
+The binding has the following configuration options, which can be set for "binding:onkyo":
+
+| Parameter | Name    | Description  | Required |
+|-----------------|------------------------|--------------|------------ |
+| callbackUrl | Callback URL | URL to use for playing notification sounds, e.g. http://192.168.0.2:8080 | no |
+
 ## Thing Configuration
 
 The Onkyo AVR thing requires the ip address and the port to access it on.
 In the thing file, this looks e.g. like
+
+Model specific
+
 ```
-onkyo:onkyoAV:myOnkyo [ipAddress="192.168.1.100", port="60128"]
+onkyo:TX-NR818:myOnkyo [ipAddress="192.168.1.100", port="60128"]
+```
 
+or
 
-##Channels
+Generic model
 
-The Onkyo AVR supports the following channels:
+```
+onkyo:onkyoAVR:myOnkyo [ipAddress="192.168.1.100", port="60128"]
+```
+
+Optionally you can specify the refresh interval by refreshInterval parameter.
+
+```
+onkyo:onkyoAVR:myOnkyo [ipAddress="192.168.1.100", port="60128", refreshInterval=30]
+```
+
+Maximum volume level can also be configured by volumeLimit parameter. This prevent setting receiver volume level too high, which could damage your speakers or receiver.
+
+```
+onkyo:onkyoAVR:myOnkyo [ipAddress="192.168.1.100", port="60128", volumeLimit=50]
+```
+
+Binding then automatically scale the volume level in both directions (100% = 50 = 100%).
+
+## Channels
+
+The Onkyo AVR supports the following channels (some channels are model specific):
 
 | Channel Type ID         | Item Type    | Description  |
 |-------------------------|--------------|--------------|
-| power                   | Switch       | Power on/off your device |
-| mute                    | Switch       | Mute/unmute your device |
-| input                   | Number       | The input for the AVR    |
-| volume                  | Dimmer       | Volume of your device |
-| control                 | Player       | Control the Zone Player, e.g.  play/pause/next/previous/ffward/rewind (available if playing from Network or USB)|
-| title                   | String       | Title of the current song (available if playing from Network or USB)|
-| album                   | String       | Album name of the current song (available if playing from Network or USB)|
-| artist                  | String       | Artist name of the current song (available if playing from Network or USB)|
-| currentPlayingTime      | String       | Current playing time of the current song (available if playing from Network or USB)|
-| listenmode              | Number       | Current listening mode e.g. Stero, 5.1ch Surround,..|
+| zone1#power                    | Switch       | Power on/off your device |
+| zone1#mute                     | Switch       | Mute/unmute zone 1 |
+| zone1#input                    | Number       | The input for zone 1    |
+| zone1#volume                   | Dimmer       | Volume of zone 1 |
+| zone2#power                    | Switch       | Power on/off zone 2 |
+| zone2#mute                     | Switch       | Mute/unmute zone 2 |
+| zone2#input                    | Number       | The input for zone 2    |
+| zone2#volume                   | Dimmer       | Volume of zone 2 |
+| zone3#power                    | Switch       | Power on/off zone 3 |
+| zone3#mute                     | Switch       | Mute/unmute zone 3 |
+| zone3#input                    | Number       | The input for zone 3    |
+| zone3#volume                   | Dimmer       | Volume of zone 3 |
+| player#control                 | Player       | Control the Zone Player, e.g.  play/pause/next/previous/ffward/rewind (available if playing from Network or USB)|
+| player#title                   | String       | Title of the current song (available if playing from Network or USB)|
+| player#album                   | String       | Album name of the current song (available if playing from Network or USB)|
+| player#artist                  | String       | Artist name of the current song (available if playing from Network or USB)|
+| player#currentPlayingTime      | String       | Current playing time of the current song (available if playing from Network or USB)|
+| player#listenmode              | Number       | Current listening mode e.g. Stereo, 5.1ch Surround,..|
+| player#playuri                 | String       | Plays the URI provided to the channel |
+| player#albumArt                | Image        | Image of the current album art of the current song |
+| player#albumArtUrl             | String       | Url to the current album art of the current song |
+| netmenu#title                  | String       | Title of the current NET service |
+| netmenu#control                | String       | Control the USB/Net Menu, e.g. Up/Down/Select/Back/PageUp/PageDown/Select[0-9] 
+| netmenu#selection              | Number       | The number of the currently selected USB/Net Menu entry (0-9) 
+| netmenu#item0                  | String       | The text of USB/Net Menu entry 0
+| netmenu#item1                  | String       | The text of USB/Net Menu entry 1
+| netmenu#item2                  | String       | The text of USB/Net Menu entry 2 
+| netmenu#item3                  | String       | The text of USB/Net Menu entry 3 
+| netmenu#item4                  | String       | The text of USB/Net Menu entry 4 
+| netmenu#item5                  | String       | The text of USB/Net Menu entry 5 
+| netmenu#item6                  | String       | The text of USB/Net Menu entry 6 
+| netmenu#item7                  | String       | The text of USB/Net Menu entry 7 
+| netmenu#item8                  | String       | The text of USB/Net Menu entry 8 
+| netmenu#item9                  | String       | The text of USB/Net Menu entry 9 
 
-##Input Source Mapping
+
+## Input Source Mapping
 
 Here after are the ID values of the input sources:
 
@@ -72,7 +145,7 @@ Here after are the ID values of the input sources:
 * 37: AM
 * 38: TUNER
 * 39: MUSICSERVER
-* 40: INTERETRADIO
+* 40: INTERNETRADIO
 * 41: USB
 * 42: USB_BACK
 * 43: NETWORK
@@ -80,3 +153,7 @@ Here after are the ID values of the input sources:
 * 48: MULTICH
 * 50: SIRIUS
 
+## Audio Support
+
++ All supported Onkyo AVRs are registered as an audio sink in the framework.
++ Audio streams are sent to the `playuri` channel.
