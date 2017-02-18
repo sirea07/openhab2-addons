@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config-description:config-descriptions
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:config-description="http://eclipse.org/smarthome/schemas/config-description/v1.0.0"
+    xsi:schemaLocation="http://eclipse.org/smarthome/schemas/config-description/v1.0.0
+        http://eclipse.org/smarthome/schemas/config-description-1.0.0.xsd">
+        
+  <config-description uri="thing-type:rothenergylogic:config">
+            <parameter-group name="identification">
+                <label>Identification</label>
+                <description>Hardware &amp; location identification</description>
+                <advanced>false</advanced>
+            </parameter-group>
+            <parameter-group name="device">
+                <label>Device Settings</label>
+                <description>Device parameter settings</description>
+                <advanced>false</advanced>
+            </parameter-group>
+            <parameter name="ownerId"  type="integer" required="false" groupName="identification" readOnly="true">
+                <label>Module Id (read-only)</label>
+                <description>The ID of the connection module on which the thermostat is registered.</description>
+            </parameter>            
+            <parameter name="id" type="integer" required="true" groupName="identification" readOnly="true">
+                <label>Id (read-only)</label>
+                <description>The ID of the thermostat.</description>
+            </parameter>
+            <parameter name="name" type="text" required="true" groupName="device">
+                <label>Name</label>
+                <description>The description of the thermostat.</description>
+            </parameter>
+            <parameter name="setPoint" type="decimal" required="true" groupName="device">
+                <label>Set Point</label>
+                <description>The set point temperature of the thermostat in centigrade.</description>
+            </parameter>      
+        </config-description>
+        
+</config-description:config-descriptions>

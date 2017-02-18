@@ -99,7 +99,7 @@ public class DiscoveryService extends AbstractDiscoveryService implements EventS
             return;
         }
 
-        this.logger.info("Starting background discovery of RothEnergyLogicTouchline thermostats.");
+        this.logger.info("Starting background discovery of RothEnergyLogic thermostats.");
 
         List<String> ipAddresses = this.getIpAddresses();
 
