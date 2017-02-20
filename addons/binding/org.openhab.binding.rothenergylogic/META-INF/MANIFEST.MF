@@ -37,4 +37,4 @@ Import-Package:
 Service-Component: OSGI-INF/*.xml
 Export-Package: org.openhab.binding.rothenergylogic,
  org.openhab.binding.rothenergylogic.handler
-Require-Bundle: org.junit
+Require-Bundle: org.eclipse.smarthome.config.core

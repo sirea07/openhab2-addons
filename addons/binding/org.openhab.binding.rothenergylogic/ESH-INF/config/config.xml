@@ -28,7 +28,7 @@
                 <label>Name</label>
                 <description>The description of the thermostat.</description>
             </parameter>
-            <parameter name="setPoint" type="decimal" required="true" groupName="device">
+            <parameter name="setPointTemp" type="decimal" required="true" groupName="device">
                 <label>Set Point</label>
                 <description>The set point temperature of the thermostat in centigrade.</description>
             </parameter>      

@@ -28,6 +28,7 @@ public class RothEnergyLogicHandlerFactory extends BaseThingHandlerFactory {
 
     private final static Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
             .singleton(RothEnergyLogicBindingConstants.THING_TYPE_THERMOSTAT);
+    private WebserverFacade webserver;
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -45,9 +46,17 @@ public class RothEnergyLogicHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (thingTypeUID.equals(RothEnergyLogicBindingConstants.THING_TYPE_THERMOSTAT)) {
-            return new RothEnergyLogicHandler(thing);
+            return new RothEnergyLogicHandler(thing, this.webserver);
         }
 
         return null;
+    }
+
+    protected void addWebserverFacade(WebserverFacade webserver) {
+        this.webserver = webserver;
+    }
+
+    protected void removeWebserverFacade(WebserverFacade webserver) {
+        this.webserver = null;
     }
 }

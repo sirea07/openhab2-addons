@@ -23,10 +23,11 @@ public class RothEnergyLogicBindingConstants {
     public final static ThingTypeUID THING_TYPE_THERMOSTAT = new ThingTypeUID(BINDING_ID, "thermostat");
 
     // List of all Channel ids
-    public final static String CHANNEL_ACTUAL_TEMP = "actual_temp";
-    public final static String CHANNEL_SET_TEMP = "set_temp";
+    public final static String CHANNEL_ACTUAL_TEMP = "actualTemp";
+    public final static String CHANNEL_SET_TEMP = "setPointTemp";
 
     // Configuration Parameters
     public final static String WEBSERVER_IP_ADDRESS = "webserver_ip";
+    public final static String REFRESH_INTERVAL_IN_SECONDS = "refresh_interval";
 
 }

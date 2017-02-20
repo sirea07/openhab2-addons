@@ -9,13 +9,13 @@
         <description>Roth Energylogic Heating Thermostat</description>
 
         <channels>
-            <channel id="actual_temp"   typeId="actual_temp"/>
-            <channel id="set_temp"      typeId="set_temp"/>
+            <channel id="actualTemp"   typeId="actualTemp"/>
+            <channel id="setPointTemp"      typeId="setPointTemp"/>
         </channels>
         <config-description-ref uri="thing-type:rothenergylogic:config" />
     </thing-type>
 
-    <channel-type id="actual_temp">
+    <channel-type id="actualTemp">
         <item-type>Number</item-type>
         <label>Actual Temperature</label>
         <description>Actual measured room temperature</description>
@@ -27,7 +27,7 @@
         </state>
     </channel-type>
     
-    <channel-type id="set_temp">
+    <channel-type id="setPointTemp">
         <item-type>Number</item-type>
         <label>Set Temperature</label>
         <description>Set desired room temperature.</description>

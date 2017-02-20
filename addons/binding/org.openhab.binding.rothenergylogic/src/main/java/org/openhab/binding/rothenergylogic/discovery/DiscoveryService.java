@@ -2,11 +2,10 @@ package org.openhab.binding.rothenergylogic.discovery;
 
 import static org.openhab.binding.rothenergylogic.RothEnergyLogicBindingConstants.THING_TYPE_THERMOSTAT;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
@@ -15,71 +14,33 @@ import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.events.Event;
 import org.eclipse.smarthome.core.events.EventFilter;
 import org.eclipse.smarthome.core.events.EventSubscriber;
-import org.eclipse.smarthome.core.items.ItemRegistry;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingRegistry;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.events.ThingAddedEvent;
-import org.openhab.binding.rothenergylogic.RothEnergyLogicBindingConstants;
+import org.openhab.binding.rothenergylogic.internal.BindingConfiguration;
+import org.openhab.binding.rothenergylogic.internal.BindingConfigurationListener;
+import org.openhab.binding.rothenergylogic.internal.BindingConfigurationManager;
 import org.openhab.binding.rothenergylogic.internal.WebserverFacade;
-import org.openhab.binding.rothenergylogic.internal.WebserverResponseParser;
 import org.openhab.binding.rothenergylogic.internal.model.Thermostat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 
-public class DiscoveryService extends AbstractDiscoveryService implements EventSubscriber {
-    private static HashMap<String, String> MappedWebserverKeys = null;
+public class DiscoveryService extends AbstractDiscoveryService
+        implements BindingConfigurationListener, EventSubscriber {
     private Logger logger = LoggerFactory.getLogger(DiscoveryService.class);
     private final static int DISCOVERY_TIME = 60;
-    private Map<String, Object> configProperties;
-    private WebserverResponseParser webserverResponseParser;
     private ThingRegistry thingRegistry;
-    private ItemRegistry itemRegistry;
+    private BindingConfigurationManager bindingConfigManager;
+    private List<String> ipAddresses = new ArrayList<>();
+    private WebserverFacade webserver;
 
     public DiscoveryService() throws IllegalArgumentException {
         super(ImmutableSet.of(THING_TYPE_THERMOSTAT), DISCOVERY_TIME, false);
-        this.webserverResponseParser = new WebserverResponseParser();
-        this.fillMappedWebserverKeys();
-    }
-
-    private synchronized void fillMappedWebserverKeys() {
-        if (MappedWebserverKeys == null) {
-            MappedWebserverKeys = new HashMap<String, String>();
-            MappedWebserverKeys.put(WebserverFacade.KEY_ID, "id");
-            MappedWebserverKeys.put(WebserverFacade.KEY_OWNER_ID, "ownerId");
-            MappedWebserverKeys.put(WebserverFacade.KEY_NAME, "name");
-            MappedWebserverKeys.put(WebserverFacade.KEY_TEMPERATURE_ACTUAL, "actTemp");
-            MappedWebserverKeys.put(WebserverFacade.KEY_TEMPERATURE_SETPOINT, "setPoint");
-            MappedWebserverKeys.put(WebserverFacade.KEY_TEMPERATURE_SETPOINT_MIN, "setPointMin");
-            MappedWebserverKeys.put(WebserverFacade.KEY_TEMPERATURE_SETPOINT_MAX, "setPointMax");
-            MappedWebserverKeys.put(WebserverFacade.KEY_TEMPERATURE_SETPOINT_STEP, "setPointSteps");
-            MappedWebserverKeys.put(WebserverFacade.KEY_TEMPERATURE_SI_UNIT, "Temperature SI Unit");
-            MappedWebserverKeys.put(WebserverFacade.KEY_WEEK_PROGRAM, "Week Program");
-            MappedWebserverKeys.put(WebserverFacade.KEY_WEEK_PROGRAM, "Week Program Enabled");
-            MappedWebserverKeys.put(WebserverFacade.KEY_OPMODE, "OPMode");
-            MappedWebserverKeys.put(WebserverFacade.KEY_OPMODE_ENABLED, "OPMode Enabled");
-        }
-    }
-
-    @Override
-    protected void activate(java.util.Map<String, Object> configProperties) {
-        this.configProperties = configProperties;
-        if (isIpAddressConfigured()) {
-            this.modified(configProperties);
-        }
-    };
-
-    private boolean isIpAddressConfigured() {
-        List<String> ipAddresses = this.getIpAddresses();
-        return ipAddresses != null && !ipAddresses.isEmpty();
-    }
-
-    private List<String> getIpAddresses() {
-        return (List<String>) this.configProperties.get(RothEnergyLogicBindingConstants.WEBSERVER_IP_ADDRESS);
     }
 
     @Override
@@ -89,60 +50,42 @@ public class DiscoveryService extends AbstractDiscoveryService implements EventS
 
     @Override
     protected void startScan() {
-        System.out.println("Scan started!");
-
+        this.startDiscovery();
     }
 
     @Override
-    protected void startBackgroundDiscovery() {
-        if (!this.isIpAddressConfigured()) {
+    protected void startDiscovery() {
+        if (this.ipAddresses == null || this.ipAddresses.isEmpty()) {
             return;
         }
 
         this.logger.info("Starting background discovery of RothEnergyLogic thermostats.");
 
-        List<String> ipAddresses = this.getIpAddresses();
+        Collection<Thermostat> thermostats = this.webserver.getThermostats();
 
-        for (String ipAddress : ipAddresses) {
-            WebserverFacade webserver = new WebserverFacade(ipAddress);
-
-            String ilrReadResponse = webserver.getILRReadValues();
-
-            if (ilrReadResponse != null && !ilrReadResponse.isEmpty()) {
-                Collection<Thermostat> thermostats = this.webserverResponseParser.parseActualsFrom(ilrReadResponse);
-                for (Thermostat thermostat : thermostats) {
-                    DiscoveryResult discoveryResult = this.createDiscoveryResult(thermostat);
-                    thingDiscovered(discoveryResult);
-                    this.setChannels(this.thingRegistry.get(discoveryResult.getThingUID()));
-                }
-            }
+        for (Thermostat thermostat : thermostats) {
+            DiscoveryResult discoveryResult = this.createDiscoveryResult(thermostat);
+            thingDiscovered(discoveryResult);
+            this.setChannels(this.thingRegistry.get(discoveryResult.getThingUID()));
         }
     }
 
     private DiscoveryResult createDiscoveryResult(Thermostat thermostat) {
         DiscoveryResult discoveryResult = DiscoveryResultBuilder
                 .create(new ThingUID(THING_TYPE_THERMOSTAT, thermostat.getId()))
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_ID), Integer.parseInt(thermostat.getId()))
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_OWNER_ID),
-                        Integer.parseInt(thermostat.getOwnerId()))
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_NAME), thermostat.getName())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_TEMPERATURE_ACTUAL),
-                        thermostat.getActualTemperature())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_TEMPERATURE_SETPOINT),
-                        thermostat.getSetPointTemperature())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_TEMPERATURE_SETPOINT_MIN),
-                        thermostat.getSetPointMinTemperature())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_TEMPERATURE_SETPOINT_MAX),
-                        thermostat.getSetPointMaxTemperature())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_TEMPERATURE_SETPOINT_STEP),
-                        thermostat.getSetPointStepValue())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_TEMPERATURE_SI_UNIT),
-                        thermostat.getTemperatureSIUnit())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_WEEK_PROGRAM), thermostat.getWeekProgram())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_WEEK_PROGRAM_ENABLED),
-                        thermostat.isWeekProgramEnabled())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_OPMODE), thermostat.getOpMode())
-                .withProperty(MappedWebserverKeys.get(WebserverFacade.KEY_OPMODE_ENABLED), thermostat.isOpModeEnabled())
+                .withProperty(Thermostat.KEY_INTERNAL_ID, Integer.parseInt(thermostat.getId()))
+                .withProperty(Thermostat.KEY_INTERNAL_OWNER_ID, Integer.parseInt(thermostat.getOwnerId()))
+                .withProperty(Thermostat.KEY_INTERNAL_NAME, thermostat.getName())
+                .withProperty(Thermostat.KEY_INTERNAL_TEMPERATURE_ACTUAL, thermostat.getActualTemperature())
+                .withProperty(Thermostat.KEY_INTERNAL_TEMPERATURE_SETPOINT, thermostat.getSetPointTemperature())
+                .withProperty(Thermostat.KEY_INTERNAL_TEMPERATURE_SETPOINT_MIN, thermostat.getSetPointMinTemperature())
+                .withProperty(Thermostat.KEY_INTERNAL_TEMPERATURE_SETPOINT_MAX, thermostat.getSetPointMaxTemperature())
+                .withProperty(Thermostat.KEY_INTERNAL_TEMPERATURE_SETPOINT_STEP, thermostat.getSetPointStepValue())
+                .withProperty(Thermostat.KEY_INTERNAL_TEMPERATURE_SI_UNIT, thermostat.getTemperatureSIUnit())
+                .withProperty(Thermostat.KEY_INTERNAL_WEEK_PROGRAM, thermostat.getWeekProgram())
+                .withProperty(Thermostat.KEY_INTERNAL_WEEK_PROGRAM_ENABLED, thermostat.isWeekProgramEnabled())
+                .withProperty(Thermostat.KEY_INTERNAL_OPMODE, thermostat.getOpMode())
+                .withProperty(Thermostat.KEY_INTERNAL_OPMODE_ENABLED, thermostat.isOpModeEnabled())
                 .withLabel(thermostat.getName()).withRepresentationProperty("RepresentationProperty 123").build();
 
         return discoveryResult;
@@ -168,12 +111,21 @@ public class DiscoveryService extends AbstractDiscoveryService implements EventS
         this.thingRegistry = null;
     }
 
-    protected void addItemRegistry(ItemRegistry itemRegistry) {
-        this.itemRegistry = itemRegistry;
+    protected void addBindingConfigurationManager(BindingConfigurationManager bindingConfigManager) {
+        this.bindingConfigManager = bindingConfigManager;
+        this.bindingConfigManager.addListener(this);
     }
 
-    protected void removeItemRegistry(ItemRegistry itemRegistry) {
-        this.itemRegistry = null;
+    protected void removeBindingConfigurationManager(BindingConfigurationManager bindingConfigManager) {
+        this.bindingConfigManager = null;
+    }
+
+    protected void addWebserverFacade(WebserverFacade webserver) {
+        this.webserver = webserver;
+    }
+
+    protected void removeWebserverFacade(WebserverFacade webserver) {
+        this.webserver = null;
     }
 
     @Override
@@ -190,5 +142,17 @@ public class DiscoveryService extends AbstractDiscoveryService implements EventS
     @Override
     public void receive(Event event) {
         System.out.println("Added thing!");
+    }
+
+    @Override
+    public void ConfigurationUpdated(BindingConfiguration updatedConfiguration) {
+        boolean ipAddressesUpdated = !(this.ipAddresses.containsAll(updatedConfiguration.getIpAddresses())
+                && updatedConfiguration.getIpAddresses().containsAll(this.ipAddresses));
+
+        this.ipAddresses = updatedConfiguration.getIpAddresses();
+
+        if (ipAddressesUpdated && this.ipAddresses.size() > 0) {
+            this.startDiscovery();
+        }
     }
 }

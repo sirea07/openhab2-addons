@@ -15,6 +15,22 @@ public class Thermostat {
     private boolean weekProgramEnabled;
     private String opMode;
     private boolean opModeEnabled;
+    private String webserverIpAddress;
+
+    public static final String KEY_INTERNAL_ID = "id";
+    public static final String KEY_INTERNAL_OWNER_ID = "ownerId";
+    public static final String KEY_INTERNAL_NAME = "name";
+    public static final String KEY_INTERNAL_TEMPERATURE_ACTUAL = org.openhab.binding.rothenergylogic.RothEnergyLogicBindingConstants.CHANNEL_ACTUAL_TEMP;
+    public static final String KEY_INTERNAL_TEMPERATURE_SETPOINT = org.openhab.binding.rothenergylogic.RothEnergyLogicBindingConstants.CHANNEL_SET_TEMP;
+    public static final String KEY_INTERNAL_TEMPERATURE_SETPOINT_MIN = "setPointMin";
+    public static final String KEY_INTERNAL_TEMPERATURE_SETPOINT_MAX = "setPointMax";
+    public static final String KEY_INTERNAL_TEMPERATURE_SETPOINT_STEP = "setPointSteps";
+    public static final String KEY_INTERNAL_TEMPERATURE_SI_UNIT = "tempSIUnit";
+    public static final String KEY_INTERNAL_WEEK_PROGRAM = "weekProg";
+    public static final String KEY_INTERNAL_WEEK_PROGRAM_ENABLED = "weekProgEnabled";
+    public static final String KEY_INTERNAL_OPMODE = "opMode";
+    public static final String KEY_INTERNAL_OPMODE_ENABLED = "opModeEnabled";
+    public final static String KEY_INTERNAL_WEBSERVER_ID = "webserverId";
 
     public String getWebserverId() {
         return webserverId;
@@ -126,5 +142,13 @@ public class Thermostat {
 
     public void setTemperatureSIUnit(String temperatureSIUnit) {
         this.temperatureSIUnit = temperatureSIUnit;
+    }
+
+    public String getWebserverIpAddress() {
+        return webserverIpAddress;
+    }
+
+    public void setWebserverIpAddress(String webserverIpAddress) {
+        this.webserverIpAddress = webserverIpAddress;
     }
 }

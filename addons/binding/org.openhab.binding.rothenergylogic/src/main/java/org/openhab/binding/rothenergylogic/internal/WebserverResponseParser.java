@@ -20,13 +20,13 @@ import org.xml.sax.InputSource;
 public class WebserverResponseParser {
     private Logger logger = LoggerFactory.getLogger(WebserverResponseParser.class);
 
-    public Collection<Thermostat> parseActualsFrom(String ilrReadValuesResponse) {
+    public Collection<Thermostat> parseActualsFrom(String webserverIpAddress, String ilrReadValuesResponse) {
         Collection<Thermostat> result = new ArrayList<Thermostat>();
         HashMap<Integer, Thermostat> thermostatsByIds = new HashMap<Integer, Thermostat>();
 
         try {
             Document doc = this.loadXMLFromString(ilrReadValuesResponse);
-            Node itemsRootNode = doc.getElementsByTagName(WebserverFacade.XML_ITEMS).item(0);
+            Node itemsRootNode = doc.getElementsByTagName(WebserverFacadeImpl.XML_ITEMS).item(0);
             NodeList items = itemsRootNode.getChildNodes();
 
             if (items != null && items.getLength() > 0) {
@@ -44,6 +44,7 @@ public class WebserverResponseParser {
                                     if (thermostat == null) {
                                         thermostat = new Thermostat();
                                         thermostat.setWebserverId(key.split("\\.")[0]);
+                                        thermostat.setWebserverIpAddress(webserverIpAddress);
                                         thermostatsByIds.put(id, thermostat);
                                     }
                                     this.setParsedValueOnThermostat(thermostat, key, value);
@@ -66,43 +67,43 @@ public class WebserverResponseParser {
     private void setParsedValueOnThermostat(Thermostat thermostat, String key, String value) {
         String keyName = key.substring(key.indexOf(".") + 1);
         switch (keyName) {
-            case WebserverFacade.KEY_ID:
+            case WebserverFacadeImpl.KEY_WEBSERVER_ID:
                 thermostat.setId(value);
                 break;
-            case WebserverFacade.KEY_OWNER_ID:
+            case WebserverFacadeImpl.KEY_WEBSERVER_OWNER_ID:
                 thermostat.setOwnerId(value);
                 break;
-            case WebserverFacade.KEY_NAME:
+            case WebserverFacadeImpl.KEY_WEBSERVER_NAME:
                 thermostat.setName(value);
                 break;
-            case WebserverFacade.KEY_TEMPERATURE_ACTUAL:
+            case WebserverFacadeImpl.KEY_WEBSERVER_TEMPERATURE_ACTUAL:
                 thermostat.setActualTemperature(this.parseTemperature(value));
                 break;
-            case WebserverFacade.KEY_TEMPERATURE_SETPOINT:
+            case WebserverFacadeImpl.KEY_WEBSERVER_TEMPERATURE_SETPOINT:
                 thermostat.setSetPointTemperature(this.parseTemperature(value));
                 break;
-            case WebserverFacade.KEY_TEMPERATURE_SETPOINT_MIN:
+            case WebserverFacadeImpl.KEY_WEBSERVER_TEMPERATURE_SETPOINT_MIN:
                 thermostat.setSetPointMinTemperature(this.parseTemperature(value));
                 break;
-            case WebserverFacade.KEY_TEMPERATURE_SETPOINT_MAX:
+            case WebserverFacadeImpl.KEY_WEBSERVER_TEMPERATURE_SETPOINT_MAX:
                 thermostat.setSetPointMaxTemperature(this.parseTemperature(value));
                 break;
-            case WebserverFacade.KEY_TEMPERATURE_SETPOINT_STEP:
+            case WebserverFacadeImpl.KEY_WEBSERVER_TEMPERATURE_SETPOINT_STEP:
                 thermostat.setSetPointStepValue(this.parseTemperature(value));
                 break;
-            case WebserverFacade.KEY_TEMPERATURE_SI_UNIT:
+            case WebserverFacadeImpl.KEY_WEBSERVER_TEMPERATURE_SI_UNIT:
                 thermostat.setTemperatureSIUnit(value);
                 break;
-            case WebserverFacade.KEY_WEEK_PROGRAM:
+            case WebserverFacadeImpl.KEY_WEBSERVER_WEEK_PROGRAM:
                 thermostat.setWeekProgram(value);
                 break;
-            case WebserverFacade.KEY_WEEK_PROGRAM_ENABLED:
+            case WebserverFacadeImpl.KEY_WEBSERVER_WEEK_PROGRAM_ENABLED:
                 thermostat.setWeekProgramEnabled(Boolean.parseBoolean(value));
                 break;
-            case WebserverFacade.KEY_OPMODE:
+            case WebserverFacadeImpl.KEY_WEBSERVER_OPMODE:
                 thermostat.setOpMode(value);
                 break;
-            case WebserverFacade.KEY_OPMODE_ENABLED:
+            case WebserverFacadeImpl.KEY_WEBSERVER_OPMODE_ENABLED:
                 thermostat.setOpModeEnabled(Boolean.parseBoolean(value));
                 break;
         }

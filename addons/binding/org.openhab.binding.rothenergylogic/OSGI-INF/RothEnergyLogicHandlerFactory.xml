@@ -8,12 +8,12 @@
     http://www.eclipse.org/legal/epl-v10.html
 
 -->
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="binding.rothenergylogic">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="org.openhab.binding.rothenergylogic.handlerfactory">
 
    <implementation class="org.openhab.binding.rothenergylogic.internal.RothEnergyLogicHandlerFactory"/>
 
    <service>
       <provide interface="org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory"/>
    </service>
-
+<reference bind="addWebserverFacade" cardinality="1..1" interface="org.openhab.binding.rothenergylogic.internal.WebserverFacade" name="WebserverFacade" policy="static" unbind="removeWebserverFacade" />
 </scr:component>

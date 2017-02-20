@@ -9,10 +9,14 @@
     <author>sirea07</author>
     
     <config-description uri="binding:rothenergylogic">
-        <parameter name="webserver_ip" type="text" >        
-            <label>Webserver IP address</label>
+        <parameter name="webserver_ip" type="text" required="true">        
+            <label>Webserver IP Address</label>
             <description>IP address of the master module that is connected to the local network.</description>
-            <required>true</required>
+        </parameter>
+        <parameter name="refresh_interval" type="integer" required="true">        
+            <label>Refresh Interval</label>
+            <description>The refresh interval in seconds, after which the thermostat data will be updated.</description>
+            <default>10</default>
         </parameter>
     </config-description>
 </binding:binding>
