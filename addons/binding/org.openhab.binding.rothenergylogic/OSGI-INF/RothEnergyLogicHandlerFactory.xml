@@ -16,4 +16,5 @@
       <provide interface="org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory"/>
    </service>
 <reference bind="addWebserverFacade" cardinality="1..1" interface="org.openhab.binding.rothenergylogic.internal.WebserverFacade" name="WebserverFacade" policy="static" unbind="removeWebserverFacade" />
+<reference bind="addBindingConfigurationManager" cardinality="1..1" interface="org.openhab.binding.rothenergylogic.internal.BindingConfigurationManager" name="BindingConfigurationManager" policy="static" unbind="removeBindingConfigurationManager"/>
 </scr:component>

@@ -3,6 +3,7 @@ package org.openhab.binding.rothenergylogic.internal;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -28,7 +29,10 @@ public class BindingConfigurationManagerImpl implements BindingConfigurationMana
     private ConfigurationAdmin configurationAdmin;
     private BundleContext bundleContext;
 
+    private ComponentContext componentContext;
+
     protected void activate(ComponentContext componentContext) {
+        this.componentContext = componentContext;
         this.bundleContext = componentContext.getBundleContext();
         this.setConfigAdmin();
     }
@@ -84,6 +88,17 @@ public class BindingConfigurationManagerImpl implements BindingConfigurationMana
                 this.notifyListeners();
             }
         }
+
+        try {
+            if (configDictionary != null && getBindingConfiguration().getRefreshInterval() != 30) {
+                configDictionary.put(RothEnergyLogicBindingConstants.REFRESH_INTERVAL_IN_SECONDS, 30);
+
+                configuration.update();
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     private void notifyListeners() {
@@ -102,8 +117,10 @@ public class BindingConfigurationManagerImpl implements BindingConfigurationMana
     }
 
     private boolean updateRefreshInterval(Dictionary<String, Object> configDictionary) {
-        int newRefreshInterval = Integer
-                .valueOf((String) configDictionary.get(RothEnergyLogicBindingConstants.REFRESH_INTERVAL_IN_SECONDS));
+        String refreshStr = (String) configDictionary.get(RothEnergyLogicBindingConstants.REFRESH_INTERVAL_IN_SECONDS);
+        refreshStr = refreshStr != null ? refreshStr : "0";
+
+        int newRefreshInterval = Integer.valueOf(refreshStr);
 
         boolean propertyChanged = newRefreshInterval != getBindingConfiguration().getRefreshInterval();
 
@@ -121,7 +138,7 @@ public class BindingConfigurationManagerImpl implements BindingConfigurationMana
                 .valueOf(configDictionary.get(RothEnergyLogicBindingConstants.WEBSERVER_IP_ADDRESS));
 
         if (newIpAddresses != null) {
-            String[] ipAddresses = newIpAddresses.split(";");
+            String[] ipAddresses = splitIpAddresses(newIpAddresses);
 
             for (String ipAddress : ipAddresses) {
                 if (this.isValidIpAddress(ipAddress) && !validatedAddresses.contains(ipAddress)) {
@@ -137,6 +154,10 @@ public class BindingConfigurationManagerImpl implements BindingConfigurationMana
         }
 
         return propertyChanged;
+    }
+
+    private String[] splitIpAddresses(String newIpAddresses) {
+        return newIpAddresses.split(";");
     }
 
     private boolean hasIpAddressChanged(List<String> validatedAddresses) {
@@ -159,5 +180,50 @@ public class BindingConfigurationManagerImpl implements BindingConfigurationMana
 
     private String getPid() {
         return String.format("binding.%s", RothEnergyLogicBindingConstants.BINDING_ID);
+    }
+
+    @Override
+    public synchronized void addIpAddress(String ipAddress) {
+        if (this.isValidIpAddress(ipAddress)) {
+
+            try {
+                Configuration configuration = this.configurationAdmin.getConfiguration(this.getPid());
+                Dictionary<String, Object> properties = configuration.getProperties();
+
+                if (properties == null) {
+                    properties = new Hashtable<>();
+                }
+
+                String ipAddressesValue = (String) properties.get(RothEnergyLogicBindingConstants.WEBSERVER_IP_ADDRESS);
+
+                boolean isNew = true;
+
+                if (ipAddressesValue == null || ipAddressesValue.length() == 0) {
+                    ipAddressesValue = ipAddress;
+                } else {
+                    String[] splitIpAddresses = splitIpAddresses(ipAddressesValue);
+
+                    for (String existingIpAddress : splitIpAddresses) {
+                        if (existingIpAddress.equals(ipAddress)) {
+                            isNew = false;
+                            break;
+                        }
+                    }
+
+                    ipAddressesValue = String.format("%s;%s", ipAddressesValue, ipAddress);
+                }
+
+                if (isNew) {
+                    properties.put(RothEnergyLogicBindingConstants.WEBSERVER_IP_ADDRESS, ipAddressesValue);
+                    configuration.update(properties);
+
+                    this.updateConfiguration();
+                }
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 }

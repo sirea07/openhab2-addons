@@ -31,6 +31,7 @@ public class Thermostat {
     public static final String KEY_INTERNAL_OPMODE = "opMode";
     public static final String KEY_INTERNAL_OPMODE_ENABLED = "opModeEnabled";
     public final static String KEY_INTERNAL_WEBSERVER_ID = "webserverId";
+    public final static String KEY_INTERNAL_WEBSERVER_IP_ADDRESS = "webserverIPAddress";
 
     public String getWebserverId() {
         return webserverId;
@@ -38,6 +39,13 @@ public class Thermostat {
 
     public void setWebserverId(String webserverId) {
         this.webserverId = webserverId;
+    }
+
+    public String getUniqueId() {
+        // id of thermostats that are registered to different modules might/will be equal; guarantee uniqueness through
+        // coupling of id with webserver ip address
+        // since "." is not allowed as UID for a thing, replace it with "x"
+        return String.format("%s_%s", this.getWebserverIpAddress().replaceAll("\\.", "x"), this.getId());
     }
 
     public String getId() {

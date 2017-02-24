@@ -72,7 +72,7 @@ public class DiscoveryService extends AbstractDiscoveryService
 
     private DiscoveryResult createDiscoveryResult(Thermostat thermostat) {
         DiscoveryResult discoveryResult = DiscoveryResultBuilder
-                .create(new ThingUID(THING_TYPE_THERMOSTAT, thermostat.getId()))
+                .create(new ThingUID(THING_TYPE_THERMOSTAT, thermostat.getUniqueId()))
                 .withProperty(Thermostat.KEY_INTERNAL_ID, Integer.parseInt(thermostat.getId()))
                 .withProperty(Thermostat.KEY_INTERNAL_OWNER_ID, Integer.parseInt(thermostat.getOwnerId()))
                 .withProperty(Thermostat.KEY_INTERNAL_NAME, thermostat.getName())
@@ -86,6 +86,7 @@ public class DiscoveryService extends AbstractDiscoveryService
                 .withProperty(Thermostat.KEY_INTERNAL_WEEK_PROGRAM_ENABLED, thermostat.isWeekProgramEnabled())
                 .withProperty(Thermostat.KEY_INTERNAL_OPMODE, thermostat.getOpMode())
                 .withProperty(Thermostat.KEY_INTERNAL_OPMODE_ENABLED, thermostat.isOpModeEnabled())
+                .withProperty(Thermostat.KEY_INTERNAL_WEBSERVER_IP_ADDRESS, thermostat.getWebserverIpAddress())
                 .withLabel(thermostat.getName()).withRepresentationProperty("RepresentationProperty 123").build();
 
         return discoveryResult;

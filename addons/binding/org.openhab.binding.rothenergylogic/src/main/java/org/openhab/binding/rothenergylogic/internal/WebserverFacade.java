@@ -5,7 +5,8 @@ import java.util.Collection;
 import org.openhab.binding.rothenergylogic.internal.model.Thermostat;
 
 public interface WebserverFacade {
-    Thermostat getThermostat(String thermostatId);
+
+    Thermostat getThermostat(String thermostatId, boolean forceRefresh);
 
     Collection<Thermostat> getThermostats();
 

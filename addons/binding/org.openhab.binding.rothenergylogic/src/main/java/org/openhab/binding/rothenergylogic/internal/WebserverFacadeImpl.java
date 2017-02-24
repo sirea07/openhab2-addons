@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -33,7 +34,7 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
     private Hashtable<String, ThermostatUpdateListener> updateListeners = new Hashtable<>();
     private WebserverResponseParser parser;
     private int blockTimeForNextExplicitRefresh = 5;
-    private Date nextExplicitRefreshData = new Date();
+    private Date nextExplicitRefresh = new Date();
     private BindingConfiguration bindingConfig;
     private BindingConfigurationManager bindingConfigManager;
 
@@ -88,15 +89,15 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
     }
 
     @Override
-    public Thermostat getThermostat(String thermostatId) {
-        refreshThermostats();
+    public Thermostat getThermostat(String thermostatId, boolean forceRefresh) {
+        refreshThermostats(forceRefresh || this.isRefreshObligatoryFor(thermostatId), this.bindingConfig);
 
         return this.thermostats.get(thermostatId);
     }
 
     @Override
     public Collection<Thermostat> getThermostats() {
-        refreshThermostats();
+        refreshThermostats(true, this.bindingConfig);
 
         return this.thermostats.values();
     }
@@ -107,16 +108,20 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
                 KEY_WEBSERVER_TEMPERATURE_SETPOINT, this.convertTemperatureValue(thermostat.getSetPointTemperature()));
     }
 
-    private void refreshThermostats() {
-        if (new Date().after(nextExplicitRefreshData)) {
-            Collection<Thermostat> thermostats = this.getThermostatsFromWebserver();
+    private void refreshThermostats(boolean forceRefresh, BindingConfiguration bindingConfiguration) {
+        if (new Date().after(nextExplicitRefresh) || forceRefresh) {
+            Collection<Thermostat> thermostats = this.getThermostatsFromWebserver(bindingConfiguration);
 
             for (Thermostat thermostat : thermostats) {
-                this.thermostats.put(thermostat.getId(), thermostat);
+                this.thermostats.put(thermostat.getUniqueId(), thermostat);
             }
 
-            this.nextExplicitRefreshData = getTimeToWaitUntilNextPossbileExplicitRefresh();
+            this.nextExplicitRefresh = getTimeToWaitUntilNextPossbileExplicitRefresh();
         }
+    }
+
+    private boolean isRefreshObligatoryFor(String thermostatId) {
+        return !this.thermostats.containsKey(thermostatId);
     }
 
     private Date getTimeToWaitUntilNextPossbileExplicitRefresh() {
@@ -125,12 +130,12 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
         return c.getTime();
     }
 
-    private Collection<Thermostat> getThermostatsFromWebserver() {
+    private Collection<Thermostat> getThermostatsFromWebserver(BindingConfiguration bindingConfiguration) {
         Collection<Thermostat> thermostats = new ArrayList<>();
 
-        if (this.bindingConfig != null) {
-            for (String ipAddress : this.bindingConfig.getIpAddresses()) {
-                thermostats = parser.parseActualsFrom(ipAddress, this.getILRReadValues(ipAddress));
+        if (bindingConfiguration != null) {
+            for (String ipAddress : bindingConfiguration.getIpAddresses()) {
+                thermostats.addAll(parser.parseActualsFrom(ipAddress, this.getILRReadValues(ipAddress)));
             }
         }
 
@@ -158,7 +163,6 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
 
         try {
             client.execute(httpget);
-            throw new IOException("TEST");
         } catch (IOException e) {
             logger.error(String.format("IOException: %s %s", e.getMessage(), e));
         }
@@ -252,16 +256,56 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
             return;
         }
 
+        if (this.hasNewIpAddress(updatedConfiguration.getIpAddresses())) {
+            // if the ip adresses have changed, we do an update in any case (even when auto refresh is not enabled)
+            this.refreshThermostats(true, updatedConfiguration);
+            notifyListeners();
+        }
+
         if (this.bindingConfig != null
                 && this.bindingConfig.getRefreshInterval() != updatedConfiguration.getRefreshInterval()) {
 
             if (this.pollingJob != null) {
                 this.pollingJob.cancel(false);
             }
+
+            this.initScheduledRefresh();
         }
 
         this.bindingConfig = updatedConfiguration;
-        this.initScheduledRefresh();
+    }
+
+    private boolean hasNewIpAddress(List<String> newAddresses) {
+        if (newAddresses == null) {
+            return false;
+        }
+
+        if (this.bindingConfig == null) {
+            return true;
+        }
+
+        if (newAddresses.size() != this.bindingConfig.getIpAddresses().size()) {
+            return true;
+        } else {
+            for (String ipAddress : newAddresses) {
+                if (!this.bindingConfig.getIpAddresses().contains(ipAddress)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void notifyListeners() {
+        if (updateListeners != null && thermostats != null && !thermostats.isEmpty()) {
+            for (String listenerKey : updateListeners.keySet()) {
+                Thermostat thermostat = thermostats.get(listenerKey);
+                if (thermostat != null) {
+                    updateListeners.get(listenerKey).updateThermostat(thermostat);
+                }
+            }
+        }
     }
 
     private ScheduledFuture<?> pollingJob;
@@ -278,7 +322,10 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
     private Runnable refreshActualsRunnable = new Runnable() {
         @Override
         public void run() {
-            refreshThermostats();
+            refreshThermostats(false, bindingConfig);
+
+            notifyListeners();
         }
+
     };
 }
