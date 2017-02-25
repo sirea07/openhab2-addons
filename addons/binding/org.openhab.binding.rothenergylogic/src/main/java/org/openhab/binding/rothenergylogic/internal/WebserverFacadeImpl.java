@@ -1,8 +1,6 @@
 package org.openhab.binding.rothenergylogic.internal;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -14,16 +12,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.openhab.binding.rothenergylogic.internal.model.Thermostat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,15 +148,24 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
     }
 
     private void writeValue(String ipAddress, String thermostatId, String property, String value) {
-        HttpClient client = HttpClients.createDefault();
-        HttpGet httpget = new HttpGet(
-                String.format(writeThermostatPropertyTemplate, ipAddress, thermostatId, property, value));
+        HttpClient client = new HttpClient();
 
+        ContentResponse response;
         try {
-            client.execute(httpget);
-        } catch (IOException e) {
-            logger.error(String.format("IOException: %s %s", e.getMessage(), e));
+            client.start();
+            response = client
+                    .GET(String.format(writeThermostatPropertyTemplate, ipAddress, thermostatId, property, value));
+            String content = response.getContentAsString();
+
+            client.stop();
+
+            if (!content.equals(value)) {
+                this.logger.warn("Unexpected response from webserver after write operation!");
+            }
+        } catch (Exception e) {
+            this.logger.error(e.getMessage());
         }
+
     }
 
     @Override
@@ -184,24 +184,44 @@ public class WebserverFacadeImpl implements WebserverFacade, BindingConfiguratio
 
     private String getILRReadValuesFromWebserver(String ipAddress, String body) {
         String result = "";
-        HttpClient client = HttpClients.createDefault();
-        HttpPost httppost = new HttpPost(String.format("http://%s/cgi-bin/ILRReadValues.cgi", ipAddress));
-        StringEntity entity;
+        HttpClient httpClient = new HttpClient();
+
+        ContentResponse response;
+
         try {
-            entity = new StringEntity(body);
-            entity.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "text/xml"));
-            httppost.setEntity(entity);
-            HttpResponse response = client.execute(httppost);
-            result = EntityUtils.toString(response.getEntity());
-        } catch (UnsupportedEncodingException e) {
-            logger.error(String.format("UnsupportedEncodingException: %s %s", e.getMessage(), e));
-        } catch (ClientProtocolException e) {
-            logger.error(String.format("ClientProtocolException: %s %s", e.getMessage(), e));
-        } catch (IOException e) {
-            logger.error(String.format("IOException: %s %s", e.getMessage(), e));
+            httpClient.start();
+            response = httpClient.POST(String.format("http://%s/cgi-bin/ILRReadValues.cgi", ipAddress))
+                    .content(new StringContentProvider(body), "text/xml").send();
+
+            result = response.getContentAsString();
+            httpClient.stop();
+        } catch (Exception e) {
+            this.logger.error(e.getMessage());
         }
+
         return result;
     }
+
+    // private String getILRReadValuesFromWebserver(String ipAddress, String body) {
+    // String result = "";
+    // HttpClient client = HttpClients.createDefault();
+    // HttpPost httppost = new HttpPost(String.format("http://%s/cgi-bin/ILRReadValues.cgi", ipAddress));
+    // StringEntity entity;
+    // try {
+    // entity = new StringEntity(body);
+    // entity.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "text/xml"));
+    // httppost.setEntity(entity);
+    // HttpResponse response = client.execute(httppost);
+    // result = EntityUtils.toString(response.getEntity());
+    // } catch (UnsupportedEncodingException e) {
+    // logger.error(String.format("UnsupportedEncodingException: %s %s", e.getMessage(), e));
+    // } catch (ClientProtocolException e) {
+    // logger.error(String.format("ClientProtocolException: %s %s", e.getMessage(), e));
+    // } catch (IOException e) {
+    // logger.error(String.format("IOException: %s %s", e.getMessage(), e));
+    // }
+    // return result;
+    // }
 
     private int getNumberOfDevices(String ipAddress, String xmlTemplate) {
 
